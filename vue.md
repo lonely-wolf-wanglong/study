@@ -369,8 +369,37 @@
   <input type="text" v-model.number="n2" />
   <span>{{ n1+n2 }}</span>
   ```
+  - 组件上使用v-model指令
+  ```
+  <CustomInput v-model="searchText" />
+    // 在组件上使用v-model指令，会被解析为如下所示的代码
+    <CustomInput
+    :modelValue="searchText"
+    @update:modelValue="newValue => searchText = newValue"
+  />
 
-  - v-for 指令用于进行列表循环
+
+  //子组件需要实现的代码
+  <!-- CustomInput.vue -->
+  <script>
+    export default {
+      props: ['modelValue'],
+      emits: ['update:modelValue']
+    }
+  </script>
+
+  <template>
+    <input
+      :value="modelValue"
+      @input="$emit('update:modelValue', $event.target.value)"
+    />
+  </template>
+
+  // 更改绑定的名称
+  <MyComponent v-model:title="bookTitle" />
+
+  ```
+- v-for 指令用于进行列表循环
   - v-for 指令建议增加 key 属性的使用，其注意事项如下
     - key 的值只能是字符串或者数字类型
     - key 的值必须具有唯一性
@@ -378,7 +407,12 @@
     - 使用 index 的值当作 key 的值没有任何意义（因为 index 的值不具有唯一性）
     - 建议使用 v-for 指令时一定要指定 key 的值(既提升性能，又防止列表状态紊乱)
   - Vue默认按照就地更新的策略来更新通过v-for渲染的列表。当数据项的顺序发生改变时，Vue不会随之移动DOM元素的顺序，而是就地更新每一个元素，确保他们在原本指定的索引位置上渲染。默认是高效的，但是只适用于列表渲染输出的结果不依赖于子组件的状态或者临时组件的状态。
+  - 为了给 Vue 一个提示，以便它可以跟踪每个节点的标识，从而重用和重新排序现有的元素，你需要为每个元素对应的块提供一个唯一的 key
 
+- v-model:该指令用于表单数据的双向绑定
+  - .lazy: 改为在每次 change 事件后更新数据
+  - .number: 将用户输入直接改为数字
+  - .trim: 去除输入数据两端的空格
 ### Vue 过滤器
 
 - 过滤器是 vue 为开发者提供的功能，常用于文本的格式化。过滤器可以用在两个地方，插值表达式和 v-bind 属性的绑定
@@ -404,7 +438,20 @@ Vue.filter('capitalize',(str)=>{ return str.charAt(0)+str.slice(1); })
 ### 侦听器
 
 - watch 侦听器允许开发者监视数据的变化，从而针对数据的变化做特定的操作
-
+- 默认情况下，用户创建的侦听器回调，都会在 Vue 组件更新之前被调用。这意味着你在侦听器回调中访问的 DOM 将是被 Vue 更新之前的状态
+- 如果想在侦听器回调中能访问被 Vue 更新之后的 DOM，你需要指明 flush: 'post' 选项
+- 可以通过this.$watch函数来创建监听函数
+```
+  export default {
+    // ...
+    watch: {
+      key: {
+        handler() {},
+        flush: 'post'
+      }
+    }
+  }
+```
 ```js
 const vm = new Vue({
   el: "#app",
@@ -441,7 +488,12 @@ const vm = new Vue({
   },
 });
 ```
-
+- watch侦听器在组件卸载之前停止监听,可以调用watch返回函数
+```
+  const unwatch = this.$watch('foo', callback)
+  // ...当该侦听器不再需要时
+  unwatch()
+```
 ### 什么是计算属性
 
 - 计算属性是通过一系列运算之后，最终得到一个属性值
@@ -518,6 +570,8 @@ axios({
   - template：组件的模板结构
   - script: 组件的 Javascript 行为
   - style: 组件的样式
+- 组件的全局注册：我们可以使用 Vue 应用实例的 app.component() 方法，让组件在当前 Vue 应用中全局可用
+- 局部组件注册的优点: 局部注册的组件需要在使用它的父组件中显式导入，并且只能在该父组件中使用。它的优点是使组件之间的依赖关系更加明确，并且对 tree-shaking 更加友好
 - 使用组件的三个步骤:
   - 使用 import 语法导入需要的组件
   ```js
@@ -557,7 +611,7 @@ axios({
   }
   ```
   - props 中的数据，可以直接在插值表达式中使用，props 是只读的，不能直接修改 props 的值，否则终端将会报错
-  - 要想修改 props 的值，可以把 props 的值转存到 data 中，因为 data 中的数据都是可读可写的
+  - 子组件要想修改 props 的值，可以把 props 的值转存到 data 中，因为 data 中的数据都是可读可写的。或者可以通过计算属性对父组件传过来的值进行相应的转换。
   - props 的 default 默认值
     - 在声明自定义属性时，可以通过 default 来定义属性的默认值
     ```js
@@ -574,6 +628,23 @@ axios({
   如果传递过来的值不符合此类型,则终端会报错 type: Number } } }
   ```
   - required: 该属性设置必填
+  - 使用一个对象绑定多个 prop:
+  ```
+    export default {
+      data() {
+        return {
+          post: {
+            id: 1,
+            title: 'My Journey with Vue'
+          }
+        }
+      }
+    }
+
+    //下方这两种方式的属性绑定等价
+    <BlogPost v-bind="post" />
+    <BlogPost :id="post.id" :title="post.title" />
+  ```
 
 ### 生命周期
 
@@ -609,15 +680,44 @@ axios({
   - 子组件向父组件共享数据使用自定义事件:
 
   ```vue
-  // 子组件 export default { data(){ return { count: 0 } }, nethods:{ add() {
-  this.count+=1 //修改时，通过$emit()触发自定义事件
-  this.$emit('numchange',this.count) } } } //父组件
+  // 子组件 
+  export default { 
+    data(){ return { count: 0 } }, 
+    methods:{ add() {
+      this.count+=1 //修改时，通过$emit()触发自定义事件
+      this.$emit('numchange',this.count) 
+      } 
+    } 
+  } //父组件
   <Son @numchange="getNewCount"></Son>
-
+ 
   export default { data() { return { countFromSon: 0} }, methods: {
   getNewCount(val){ this.countFromSon = val } } }
   ```
+ - 这个 emits 选项还支持对象语法，它允许我们对触发事件的参数进行验证
+ ```
+  export default {
+    emits: {
+      // 没有校验
+      click: null,
 
+      // 校验 submit 事件
+      submit: ({ email, password }) => {
+        if (email && password) {
+          return true
+        } else {
+          console.warn('Invalid submit event payload!')
+          return false
+        }
+      }
+    },
+    methods: {
+      submitForm(email, password) {
+        this.$emit('submit', { email, password })
+      }
+    }
+  }
+ ```
 - 兄弟之间的数据传递，使用 EventBus
   - 在 Vue2.x 中，兄弟组件之间数据共享的方案是 EventBus
   - 创建 eventBus.js 模块，并向外共享一个 Vue 的实例对象
@@ -678,6 +778,62 @@ this.$refs.counterRef.add() } }
 - v-slot 不能直接用在元素身上，必须使用在 template 标签上
 - template 这个标签，它是一个虚拟的标签，只能起到包裹性质的作用，但是不会被渲染为任何实质性的 html 元素。v-slot 的简写形式为#
 - 插槽包括具名插槽和作用域插槽
+- 插槽的使用示例：
+```
+<div class="container">
+  <header>
+    <!-- 标题内容放这里 -->
+  </header>
+  <main>
+    <!-- 主要内容放这里 -->
+  </main>
+  <footer>
+    <!-- 底部内容放这里 -->
+  </footer>
+</div>
+
+<BaseLayout>
+  <template #header>
+    <h1>Here might be a page title</h1>
+  </template>
+
+  <template #default>
+    <p>A paragraph for the main content.</p>
+    <p>And another one.</p>
+  </template>
+
+  <template #footer>
+    <p>Here's some contact info</p>
+  </template>
+</BaseLayout>
+```
+
+### props逐级透传的问题解决：provide和inject
+
+- 一个父组件相对于其所有的后代组件，会作为依赖提供者。任何后代的组件树，无论层级有多深，都可以注入由父组件提供给整条链路的依赖
+- 要为组件后代提供数据，需要使用到 provide 选项
+```
+export default {
+  provide: {
+    message: 'hello!'
+  }
+}
+
+```
+- 注入上层组件提供的数据，需使用 inject 选项来声明
+- 注入会在组件自身的状态之前被解析，因此你可以在 data() 中访问到注入的属性
+```
+export default {
+  inject: ['message'],
+  created() {
+    console.log(this.message) // injected value
+  }
+}
+
+```
+
+### defineAsyncComponent可以实现异步组件的调用
+- defineAsyncComponent 方法接收一个返回 Promise 的加载函数。这个 Promise 的 resolve 回调方法应该在从服务器获得组件定义时调用。你也可以调用 reject(reason) 表明加载失败。
 
 ### 自定义指令
 
@@ -782,6 +938,11 @@ Vue.directive('color',function(el, binding){ el.style.color = binding.value })
 - 路由重定向指的是: 用户在访问地址 A 的时候，强制用户跳转到地址 C,从而展示特定的组件页面。通过路由规则的 redirect 属性，指定一个新的路由地址，可以很方便地设置路由的重定向。
 - 通过路由实现组件的嵌套，叫做嵌套路由，点击父级路由链接显示模板内容。
 
+### 透传 Attributes
+
+- “透传 attribute”指的是传递给一个组件，却没有被该组件声明为 props 或 emits 的 attribute 或者 v-on 事件监听器。最常见的例子就是 class、style 和 id
+- 如果你不想要一个组件自动地继承 attribute，你可以在组件选项中设置 inheritAttrs: false。
+- 如果需要，你可以通过 $attrs 这个实例属性来访问组件的所有透传 attribute
 
 
 
