@@ -944,7 +944,84 @@ Vue.directive('color',function(el, binding){ el.style.color = binding.value })
 - 如果你不想要一个组件自动地继承 attribute，你可以在组件选项中设置 inheritAttrs: false。
 - 如果需要，你可以通过 $attrs 这个实例属性来访问组件的所有透传 attribute
 
+### Vue插件的相关使用
 
+- 插件发挥作用的使用场景
+	- 通过app.component()或者app.derective()注册一到多个全局组件和自定义指令
+	- 通过app.provide()使得一个资源可以被注入整个应用
+	- 想app.config.globalProperties添加一些全局实例属性和方法
+	- 使用相关的组件库，如vue-router
+
+
+### keyalive属性
+- <KeepAlive> 是一个内置组件，它的功能是在多个组件间动态切换时缓存被移除的组件实例。
+- <KeepAlive> 默认会缓存内部的所有组件实例，但我们可以通过 include 和 exclude prop 来定制该行为。这两个 prop 的值都可以是一个以英文逗号分隔的字符串、一个正则表达式，或是包含这两种类型的一个数组
+- max:用来配置缓存的最大实例数
+
+### Teleport传送们
+- 是一个内置组件，它可以将一个组件内部的一部分模板“传送”到该组件的 DOM 结构外层的位置去
+- 实例代码如下:
+```
+	<button @click="open = true">Open Modal</button>
+
+	<Teleport to="body">
+	  <div v-if="open" class="modal">
+		<p>Hello from the modal!</p>
+		<button @click="open = false">Close</button>
+	  </div>
+	</Teleport>
+
+```
+
+### Suspend异步组件
+- <Suspense> 组件会触发三个事件：pending、resolve 和 fallback。pending 事件是在进入挂起状态时触发。
+- resolve 事件是在 default 插槽完成获取新内容时触发。fallback 事件则是在 fallback 插槽的内容显示时触发
+
+
+## Vue 组合式API相关内容
+
+### 响应式基础
+
+- 可以使用 reactive() 函数创建一个响应式对象或数组,响应式的代理对象和原始对象是不相等的
+```
+  import { reactive } from 'vue'
+  const state = reactive({ count: 0 })
+```
+- 要在组件模板中使用响应式状态，需要在 setup() 函数中定义并返回
+```
+  import { reactive } from 'vue'
+
+  export default {
+    // `setup` 是一个专门用于组合式 API 的特殊钩子函数
+    setup() {
+      const state = reactive({ count: 0 })
+
+      // 暴露 state 到模板
+      return {
+        state
+      }
+    }
+  }
+
+```
+- 为保证访问代理的一致性，对同一个原始对象调用 reactive() 会总是返回同样的代理对象，而对一个已存在的代理对象调用 reactive() 会返回其本身
+- reactive() 的局限性：
+  - 仅对对象类型有效，对原始类型无效
+  - 因为 Vue 的响应式系统是通过属性访问进行追踪的，因此我们必须始终保持对该响应式对象的相同引用。这意味着我们不可以随意地“替换”一个响应式对象，因为这将导致对初始引用的响应性连接丢失
+- 当将响应式的对象解构为本地变量时，解构的变量将会失去响应性
+- ref
+  - Vue 提供了一个 ref() 方法来允许我们创建可以使用任何值类型的响应式 ref
+  - ref 被传递给函数或是从一般对象上被解构时，不会丢失响应性
+  - ref() 将传入参数的值包装为一个带 .value 属性的 ref 对象
+  ```
+    const count = ref(0)
+
+    console.log(count) // { value: 0 }
+    console.log(count.value) // 0
+
+    count.value++
+    console.log(count.value) // 1
+  ```
 
 ## ES 模块化
 
