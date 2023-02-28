@@ -893,14 +893,26 @@ Vue.directive('color',function(el, binding){ el.style.color = binding.value })
     - 在 src 源代码目录下，新建 router/index.js 路由模块，并初始化如下的代码
 
     ```vue
-    //导入Vue和VueRouter的包 import Vue from 'vue' import VueRouter from
-    'vue-router' //2. 调用Vue.use()函数，把VueRouter安装为Vue的插件
-    Vue.use(VueRouter) //3. 创建路由的实例对象 const router = new VueRouter()
-    //创建路由的实例对象 const router = new VueRouter({ routes: [ { path:
-    '/',redirect: '/home' }, { path: '/home', component: Home }, { path:
-    '/movie',component: Movie }, { path: '/about', component: About, children: [
-    { path:'tab1', component: Tab1},//2 访问/about/tab1 { path: 'tab2',
-    component:Tab2} //2 访问/about/tab2 ] } ] }) //4. 向外共享路由的实例对象
+    //导入Vue和VueRouter的包
+     import Vue from 'vue'
+     import VueRouter from 'vue-router' 
+     //2. 调用Vue.use()函数，把VueRouter安装为Vue的插件
+     Vue.use(VueRouter) 
+    //3. 创建路由的实例对象 c
+    onst router = new VueRouter()
+    //创建路由的实例对象 
+    const router = new VueRouter(
+      { routes: [ 
+        { path:'/',redirect: '/home' },
+         { path: '/home', component: Home }, 
+         { path:'/movie',component: Movie },
+          { path: '/about', component: About,
+             children: [
+              { path:'tab1', component: Tab1},//2 访问/about/tab1 
+              { path: 'tab2',omponent:Tab2} //2 访问/about/tab2 
+            ] }
+          ] 
+        }) //4. 向外共享路由的实例对象
     export default router
     ```
 
