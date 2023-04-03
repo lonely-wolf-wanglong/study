@@ -1315,3 +1315,90 @@ module.exports = {
     : '/'
 }
 ```
+
+## ES6相关语法
+
+### Map和Set对象的使用
+
+- Map的迭代
+```
+	var myMap = new Map();
+	myMap.set(0, "zero");
+	myMap.set(1, "one");
+	
+	for(var [key, value] of myMap){
+		console.log(key + " = " + value);
+	}
+	for(var key of myMap.keys()){
+		console.log(key);
+	}
+	for(var value of myMap.values()){
+		console.log(value);
+	}
+	myMap.forEach(function(value, key){
+		console.log(key + " = " +value);
+	}, myMap);
+```
+- Set集合的计算
+```
+	var a = new Set([1,2,3]);
+	var b = new Set([4,3,2]);
+	var union = new Set([...a, ...b]);
+	var intersect = new Set([...a].filter(x => b.has(x)));
+	var difference = new Set([...a].filter(x => !b.has(x)));
+```
+
+### Proxy对象的使用
+- Proxy可以直接监听整个对象而非属性
+- Proxy可以直接监听数组的变化。
+- Proxy返回的是一个新对象，只操作新的对象达到目的。Object.defineProperty只能遍历对象属性进行直接修改；
+有属性，也无法监听动态新增的属性，但是Proxy可以
+```
+	var book = {
+		name: "大前端"
+	};
+	
+	var proxy = new Proxy(book, {
+		get: function(target, propKey) {
+			if(propKey in target){
+				return target[propKey];
+			}else{
+				throw new ReferenceError("Prop name \"" + propKey + "\" does not exist");
+			]
+		}
+	})
+	proxy.name
+	proxy.age
+	
+	var target = {
+		name: "es6"
+	}
+	
+	const proxy = new Proxy(target, {
+		set(target, property, value){
+			console.log('target's ${property} change to ${value}');
+			target[property] = value;
+			return true;
+		}
+	})
+	proxy.name = "vue"
+	console.log(proxy.name)
+```
+### 异步编程
+
+- promise异步请求的例子
+	- Promise的实例对象的三种状态: pending, fulfilled, rejected.
+	- pending: 等待状态，如正在进行网络请求时，或者定时器没有到时间，此时Promise的状态就是pending
+	- fulfilled: 完成状态，主动回调了resolve时，就处于该状态，并且会回调.then()方法
+	- rejected: 拒绝状态，当主动回调了reject时，就处于该状态，并且会回调.catch方法
+```
+	let promise = new Promise((resolve, reject) => {
+		$.get('/remoteUrl', (data, status) =>{
+			if(status == 'success'){
+				resolve({msg:data});
+			}else{
+				reject({error: data});
+			}
+		})
+	})
+```
